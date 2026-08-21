@@ -1,8 +1,8 @@
 import React from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
-import { Avatar, AvatarImage } from '../ui/avatar'
-import { LogOut, User2 } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
+import { LogOut, User2, Briefcase } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
@@ -18,89 +18,116 @@ const Navbar = () => {
     const logoutHandler = async () => {
         try {
             const res = await axios.get(`${USER_API_END_POINT}/logout`, { withCredentials: true });
-            if (res.data.success) {
-                dispatch(setUser(null));
-                navigate("/");
-                toast.success(res.data.message);
-            }
+            localStorage.removeItem("token");
+            delete axios.defaults.headers.common['Authorization'];
+            dispatch(setUser(null));
+            navigate("/login");
+            toast.success(res?.data?.message || "Logged out successfully");
         } catch (error) {
-            console.log(error);
-            toast.error(error.response.data.message);
+            console.error("Logout error:", error);
+            localStorage.removeItem("token");
+            delete axios.defaults.headers.common['Authorization'];
+            dispatch(setUser(null));
+            navigate("/login");
         }
     }
+
+    const getUserInitials = (name) => {
+        if (!name) return "U";
+        return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    };
+
     return (
-        <div className='bg-white'>
-            <div className='flex items-center justify-between mx-auto max-w-7xl h-16'>
+        <div className='bg-white border-b border-gray-100 sticky top-0 z-50'>
+            <div className='flex items-center justify-between mx-auto max-w-7xl h-16 px-4'>
                 <div>
-                    <h1 className='text-2xl font-bold'>Job<span className='text-[#F83002]'>Portal</span></h1>
+                    <Link to="/" className='text-2xl font-bold tracking-tight'>
+                        Job<span className='text-[#6A38C2]'>Portal</span>
+                    </Link>
                 </div>
-                <div className='flex items-center gap-12'>
-                    <ul className='flex font-medium items-center gap-5'>
+                <div className='flex items-center gap-8'>
+                    <ul className='flex font-medium items-center gap-6 text-gray-700'>
                         {
                             user && user.role === 'recruiter' ? (
                                 <>
-                                    <li><Link to="/admin/companies">Companies</Link></li>
-                                    <li><Link to="/admin/jobs">Jobs</Link></li>
+                                    <li><Link to="/admin/companies" className='hover:text-[#6A38C2] transition'>Companies</Link></li>
+                                    <li><Link to="/admin/jobs" className='hover:text-[#6A38C2] transition'>Posted Jobs</Link></li>
                                 </>
                             ) : (
                                 <>
-                                    <li><Link to="/">Home</Link></li>
-                                    <li><Link to="/jobs">Jobs</Link></li>
-                                    <li><Link to="/browse">Browse</Link></li>
+                                    <li><Link to="/" className='hover:text-[#6A38C2] transition'>Home</Link></li>
+                                    <li><Link to="/jobs" className='hover:text-[#6A38C2] transition'>Jobs</Link></li>
+                                    <li><Link to="/browse" className='hover:text-[#6A38C2] transition'>Browse</Link></li>
                                 </>
                             )
                         }
-
-
                     </ul>
+
                     {
                         !user ? (
-                            <div className='flex items-center gap-2'>
-                                <Link to="/login"><Button variant="outline">Login</Button></Link>
+                            <div className='flex items-center gap-3'>
+                                <Link to="/login"><Button variant="outline" className="border-gray-300">Login</Button></Link>
                                 <Link to="/signup"><Button className="bg-[#6A38C2] hover:bg-[#5b30a6]">Signup</Button></Link>
                             </div>
                         ) : (
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Avatar className="cursor-pointer">
-                                        <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" />
+                                    <Avatar className="cursor-pointer border-2 border-purple-200">
+                                        <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
+                                        <AvatarFallback className="bg-purple-100 text-purple-700 font-bold">
+                                            {getUserInitials(user?.fullname)}
+                                        </AvatarFallback>
                                     </Avatar>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className=''>
-                                        <div className='flex gap-2 space-y-2'>
-                                            <Avatar className="cursor-pointer">
-                                                <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" />
+                                <PopoverContent className="w-80 p-4" align="end">
+                                    <div>
+                                        <div className='flex items-center gap-3 pb-3 border-b border-gray-100'>
+                                            <Avatar className="h-12 w-12 border border-gray-200">
+                                                <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
+                                                <AvatarFallback className="bg-purple-100 text-purple-700 font-bold">
+                                                    {getUserInitials(user?.fullname)}
+                                                </AvatarFallback>
                                             </Avatar>
-                                            <div>
-                                                <h4 className='font-medium'>{user?.fullname}</h4>
-                                                <p className='text-sm text-muted-foreground'>{user?.profile?.bio}</p>
+                                            <div className='overflow-hidden'>
+                                                <h4 className='font-bold text-gray-800 truncate'>{user?.fullname}</h4>
+                                                <p className='text-xs text-gray-500 truncate'>{user?.email}</p>
+                                                <span className='inline-block mt-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-800'>
+                                                    {user?.role}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className='flex flex-col my-2 text-gray-600'>
+                                        <div className='flex flex-col gap-1 mt-3 text-gray-600'>
                                             {
-                                                user && user.role === 'student' && (
-                                                    <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                        <User2 />
-                                                        <Button variant="link"> <Link to="/profile">View Profile</Link></Button>
-                                                    </div>
+                                                user?.role === 'student' && (
+                                                    <Link to="/profile" className='flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition text-sm font-medium'>
+                                                        <User2 className='w-4 h-4 text-purple-600' />
+                                                        <span>View Profile</span>
+                                                    </Link>
                                                 )
                                             }
-
-                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                <LogOut />
-                                                <Button onClick={logoutHandler} variant="link">Logout</Button>
-                                            </div>
+                                            {
+                                                user?.role === 'recruiter' && (
+                                                    <Link to="/admin/jobs/create" className='flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition text-sm font-medium'>
+                                                        <Briefcase className='w-4 h-4 text-purple-600' />
+                                                        <span>Post a New Job</span>
+                                                    </Link>
+                                                )
+                                            }
+                                            <button 
+                                                onClick={logoutHandler} 
+                                                className='flex items-center gap-2 p-2 hover:bg-red-50 text-red-600 rounded-md transition text-sm font-medium w-full text-left'
+                                            >
+                                                <LogOut className='w-4 h-4' />
+                                                <span>Logout</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </PopoverContent>
                             </Popover>
                         )
                     }
-
                 </div>
             </div>
-
         </div>
     )
 }

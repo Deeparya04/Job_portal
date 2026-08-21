@@ -13,28 +13,29 @@ import { setLoading } from '@/redux/authSlice'
 import { Loader2 } from 'lucide-react'
 
 const Signup = () => {
-
     const [input, setInput] = useState({
         fullname: "",
         email: "",
         phoneNumber: "",
         password: "",
-        role: "",
-        file: ""
+        role: "student",
+        file: null
     });
-    const {loading,user} = useSelector(store=>store.auth);
+    const { loading, user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const changeEventHandler = (e) => {
         setInput({ ...input, [e.target.name]: e.target.value });
     }
+    
     const changeFileHandler = (e) => {
-        setInput({ ...input, file: e.target.files?.[0] });
+        setInput({ ...input, file: e.target.files?.[0] || null });
     }
+
     const submitHandler = async (e) => {
         e.preventDefault();
-        const formData = new FormData();    //formdata object
+        const formData = new FormData();
         formData.append("fullname", input.fullname);
         formData.append("email", input.email);
         formData.append("phoneNumber", input.phoneNumber);
@@ -52,106 +53,137 @@ const Signup = () => {
             });
             if (res.data.success) {
                 navigate("/login");
-                toast.success(res.data.message);
+                toast.success(res.data.message || "Account created successfully!");
             }
         } catch (error) {
-            console.log(error);
-            toast.error(error.response.data.message);
-        } finally{
+            console.error("Signup failed:", error);
+            toast.error(error?.response?.data?.message || error.message || "Failed to create account.");
+        } finally {
             dispatch(setLoading(false));
         }
     }
 
-    useEffect(()=>{
-        if(user){
+    useEffect(() => {
+        if (user) {
             navigate("/");
         }
-    },[])
+    }, [user, navigate]);
+
     return (
         <div>
             <Navbar />
-            <div className='flex items-center justify-center max-w-7xl mx-auto'>
-                <form onSubmit={submitHandler} className='w-1/2 border border-gray-200 rounded-md p-4 my-10'>
-                    <h1 className='font-bold text-xl mb-5'>Sign Up</h1>
-                    <div className='my-2'>
-                        <Label>Full Name</Label>
+            <div className='flex items-center justify-center max-w-7xl mx-auto px-4'>
+                <form onSubmit={submitHandler} className='w-full max-w-lg border border-gray-200 shadow-md rounded-xl p-6 my-10 bg-white'>
+                    <h1 className='font-bold text-2xl mb-2 text-gray-800'>Create an Account</h1>
+                    <p className='text-sm text-gray-500 mb-6'>Join thousands of employers and job seekers</p>
+
+                    <div className='my-3'>
+                        <Label htmlFor="fullname">Full Name</Label>
                         <Input
+                            id="fullname"
                             type="text"
                             value={input.fullname}
                             name="fullname"
                             onChange={changeEventHandler}
-                            placeholder="patel"
+                            placeholder="John Doe"
+                            required
                         />
                     </div>
-                    <div className='my-2'>
-                        <Label>Email</Label>
+
+                    <div className='my-3'>
+                        <Label htmlFor="email">Email</Label>
                         <Input
+                            id="email"
                             type="email"
                             value={input.email}
                             name="email"
                             onChange={changeEventHandler}
-                            placeholder="patel@gmail.com"
+                            placeholder="john@example.com"
+                            required
                         />
                     </div>
-                    <div className='my-2'>
-                        <Label>Phone Number</Label>
+
+                    <div className='my-3'>
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
                         <Input
+                            id="phoneNumber"
                             type="text"
                             value={input.phoneNumber}
                             name="phoneNumber"
                             onChange={changeEventHandler}
-                            placeholder="8080808080"
+                            placeholder="9876543210"
+                            required
                         />
                     </div>
-                    <div className='my-2'>
-                        <Label>Password</Label>
+
+                    <div className='my-3'>
+                        <Label htmlFor="password">Password</Label>
                         <Input
+                            id="password"
                             type="password"
                             value={input.password}
                             name="password"
                             onChange={changeEventHandler}
-                            placeholder="patel@gmail.com"
+                            placeholder="Create a strong password"
+                            required
                         />
                     </div>
-                    <div className='flex items-center justify-between'>
-                        <RadioGroup className="flex items-center gap-4 my-5">
+
+                    <div className='my-4'>
+                        <Label className='mb-2 block'>I want to register as:</Label>
+                        <RadioGroup className="flex items-center gap-6">
                             <div className="flex items-center space-x-2">
-                                <Input
+                                <input
                                     type="radio"
+                                    id="sr1"
                                     name="role"
                                     value="student"
                                     checked={input.role === 'student'}
                                     onChange={changeEventHandler}
-                                    className="cursor-pointer"
+                                    className="cursor-pointer accent-[#6A38C2] w-4 h-4"
                                 />
-                                <Label htmlFor="r1">Student</Label>
+                                <Label htmlFor="sr1" className="cursor-pointer font-normal">Candidate / Student</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <Input
+                                <input
                                     type="radio"
+                                    id="sr2"
                                     name="role"
                                     value="recruiter"
                                     checked={input.role === 'recruiter'}
                                     onChange={changeEventHandler}
-                                    className="cursor-pointer"
+                                    className="cursor-pointer accent-[#6A38C2] w-4 h-4"
                                 />
-                                <Label htmlFor="r2">Recruiter</Label>
+                                <Label htmlFor="sr2" className="cursor-pointer font-normal">Recruiter / Employer</Label>
                             </div>
                         </RadioGroup>
-                        <div className='flex items-center gap-2'>
-                            <Label>Profile</Label>
-                            <Input
-                                accept="image/*"
-                                type="file"
-                                onChange={changeFileHandler}
-                                className="cursor-pointer"
-                            />
-                        </div>
                     </div>
+
+                    <div className='my-4'>
+                        <Label htmlFor="profilePic">Profile Picture (Optional)</Label>
+                        <Input
+                            id="profilePic"
+                            accept="image/*"
+                            type="file"
+                            onChange={changeFileHandler}
+                            className="cursor-pointer mt-1"
+                        />
+                    </div>
+
                     {
-                        loading ? <Button className="w-full my-4"> <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Please wait </Button> : <Button type="submit" className="w-full my-4">Signup</Button>
+                        loading ? (
+                            <Button disabled className="w-full my-4 bg-[#6A38C2]">
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Creating account...
+                            </Button>
+                        ) : (
+                            <Button type="submit" className="w-full my-4 bg-[#6A38C2] hover:bg-[#5b30a6]">
+                                Sign Up
+                            </Button>
+                        )
                     }
-                    <span className='text-sm'>Already have an account? <Link to="/login" className='text-blue-600'>Login</Link></span>
+                    <div className='text-center mt-3'>
+                        <span className='text-sm text-gray-600'>Already have an account? <Link to="/login" className='text-[#6A38C2] font-semibold hover:underline'>Login</Link></span>
+                    </div>
                 </form>
             </div>
         </div>
