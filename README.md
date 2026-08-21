@@ -1,0 +1,1 @@
+A full-stack Job Portal web application built using React.js, Node.js, Express.js, and MongoDB. It allows job seekers to search and apply for jobs, while recruiters can create companies, post jobs, and manage applications.
